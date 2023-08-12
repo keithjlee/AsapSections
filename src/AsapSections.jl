@@ -5,7 +5,7 @@ using LinearAlgebra
 include("Sections.jl")
 export SolidSection, VoidSection, CompoundSection
 
-include("Functions.jl")
+include("GeneralFunctions.jl")
 export poly_area
 
 include("DepthAnalysis.jl")

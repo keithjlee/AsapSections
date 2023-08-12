@@ -1,7 +1,8 @@
 using AsapSections, kjlMakie, AsapToolkit
+include("test_utilities.jl")
 
 # test hollow circle
-n = 50
+n = 200
 thet_range = range(0, 2pi, n)
 
 r1 = 200.

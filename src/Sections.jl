@@ -14,13 +14,14 @@ mutable struct SolidSection <: PolygonalSection
     xmax::Float64
     ymin::Float64
     ymax::Float64
+    E::Union{Float64, Nothing}
 
     """
         Solid(points::Matrix{Float64})
 
     Create a solid section from a [2 × n] matrix of ordered 2D points
     """
-    function SolidSection(points::Matrix{Float64})
+    function SolidSection(points::Matrix{Float64}, E = nothing)
 
         #check 2D
         @assert size(points, 1) == 2 "matrix of point positions must be [2 × n]"
@@ -41,6 +42,8 @@ mutable struct SolidSection <: PolygonalSection
         #populate section properties
         section_properties!(solid)
 
+        solid.E = E
+
         return solid
     end
 
@@ -49,7 +52,7 @@ mutable struct SolidSection <: PolygonalSection
 
     Create a solid section from a vector of ordered 2D point vectors
     """
-    function SolidSection(points::Vector{Vector{Float64}})
+    function SolidSection(points::Vector{Vector{Float64}}, E = nothing)
 
         points = hcat(points...)
 
@@ -60,6 +63,7 @@ end
 
 mutable struct VoidSection <: PolygonalSection
     points::Matrix{Float64}
+    points_circular::Matrix{Float64}
     npoints::Int64
     centroid::Vector{Float64}
     area::Float64
@@ -67,6 +71,10 @@ mutable struct VoidSection <: PolygonalSection
     Sx::Float64
     Iy::Float64
     Sy::Float64
+    xmin::Float64
+    xmax::Float64
+    ymin::Float64
+    ymax::Float64
 
     """
         Void(points::Matrix{Float64})
@@ -89,7 +97,7 @@ mutable struct VoidSection <: PolygonalSection
         end
 
         #make solid
-        void = new(points, size(points, 2))
+        void = new(points, [points points[:, 1]], size(points, 2))
 
         #populate section properties
         section_properties!(void)
@@ -103,6 +111,26 @@ mutable struct VoidSection <: PolygonalSection
         points = hcat(points...)
 
         Void(points)
+
+    end
+
+    function VoidSection(section::SolidSection)
+
+        new(
+            section.points, 
+            section.points_circular, 
+            section.npoints, 
+            section.centroid, 
+            -section.area,
+            -section.Ix,
+            -section.Sx,
+            -section.Iy,
+            -section.Sy,
+            section.xmin,
+            section.xmax,
+            section.ymin,
+            section.ymax
+        )
 
     end
 end
@@ -145,15 +173,6 @@ struct CompoundSection
             Iy += section.Iy + section.area * (centroid[1] - section.centroid[1])^2
         end
 
-        all_points = hcat(getproperty.(sections, :points)...)
-
-        Sx_offset = maximum(abs.(extrema(all_points[2, :]) .- Cy))
-        Sy_offset = maximum(abs.(extrema(all_points[1, :]) .- Cx))
-
-        #critical section modulii
-        Sx = Ix / Sx_offset
-        Sy = Iy / Sy_offset
-
         #organize sections
         solids = Vector{SolidSection}()
         voids = Vector{VoidSection}()
@@ -170,6 +189,9 @@ struct CompoundSection
         xmax = maximum(getproperty.(section.solids, :xmax))
         ymin = minimum(getproperty.(section.solids, :ymin))
         ymax = maximum(getproperty.(section.solids, :ymax))
+
+        Sx = Ix / maximum(abs.([ymin, ymax] .- Cy))
+        Sy = Iy / maximum(abs.([xmin, xmax] .- Cx))
 
         return new(solids, voids, centroid, A, Ix, Sx, Iy, Sy, xmin, xmax, ymin, ymax)
     end
