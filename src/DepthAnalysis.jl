@@ -93,40 +93,38 @@ function sutherland_hodge_abs(section::PolygonalSection, y::Float64; return_sect
 
     # if absolute position is above section, no clip occurs
     if y > section.ymax
-        [[0., 0.], [0., 0.]]
-    end
-
+        new_polygon = [[0., 0.], [0., 0.]]
     #if absoluteposition encompasses the whole section, return section
-    if y < section.ymin
-        return [Vector(col) for col in eachcol(section.points)]
-    end
+    elseif y < section.ymin
+        new_polygon = [Vector(col) for col in eachcol(section.points)]
+    else
+        #clipping edge
+        y_clip = y
 
-    #clipping edge
-    y_clip = y
+        e0 = [section.xmin - 1, y_clip]
+        e1 = [section.xmax + 1, y_clip]
 
-    e0 = [section.xmin - 1, y_clip]
-    e1 = [section.xmax + 1, y_clip]
+        #main algorithm
+        new_polygon = Vector{Vector{Float64}}()
 
-    #main algorithm
-    new_polygon = Vector{Vector{Float64}}()
+        #man algorithm
+        for i = 1:npoints
+            p1 = section.points_circular[:, i]
+            p2 = section.points_circular[:, i + 1]
 
-    #man algorithm
-    for i = 1:npoints
-        p1 = section.points_circular[:, i]
-        p2 = section.points_circular[:, i + 1]
-
-        if p1[2] ≥ y_clip
-            if p2[2] ≥ y_clip
-                push!(new_polygon, p2)
+            if p1[2] ≥ y_clip
+                if p2[2] ≥ y_clip
+                    push!(new_polygon, p2)
+                else
+                    _, point = intersection(p1, p2, e0, e1)
+                    push!(new_polygon, point)
+                end
             else
-                _, point = intersection(p1, p2, e0, e1)
-                push!(new_polygon, point)
-            end
-        else
-            if p2[2] ≥ y_clip
-                _, point = intersection(p1, p2, e0, e1)
-                push!(new_polygon, point)
-                push!(new_polygon, p2)
+                if p2[2] ≥ y_clip
+                    _, point = intersection(p1, p2, e0, e1)
+                    push!(new_polygon, point)
+                    push!(new_polygon, p2)
+                end
             end
         end
     end
@@ -369,7 +367,10 @@ function depth_from_area(section::PolygonalSection, area::Float64; max_iter = 50
 
         #relative error
         err = abs(solved_area - area) / area
-        err < rel_tol ? break : nothing
+
+        if err < rel_tol
+            break
+        end
 
         #difference
         diff = solved_area - area
@@ -420,15 +421,17 @@ function depth_from_area(section::CompoundSection, area::Float64; max_iter = 500
 
     while iter ≤ max_iter
 
-        solved_area = area_from_depth(section, depth)
-
-        #relative error
-        err = abs(solved_area - area) / area
-
-        err < rel_tol ? break : nothing
+        y_clip = section.ymax - depth
+        solved_area = area_from_depth(section, y_clip)
 
         #difference
         diff = solved_area - area
+        
+        #relative error
+        err = abs(solved_area - area) / area
+        if err < rel_tol
+            break
+        end
 
         if diff < 0
             lowerbound = depth
@@ -437,8 +440,6 @@ function depth_from_area(section::CompoundSection, area::Float64; max_iter = 500
             upperbound = depth
             depth = (lowerbound + depth) / 2
         end
-
-        
         
         iter += 1
 
