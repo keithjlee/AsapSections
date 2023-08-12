@@ -185,10 +185,10 @@ struct CompoundSection
             end
         end
 
-        xmin = minimum(getproperty.(section.solids, :xmin))
-        xmax = maximum(getproperty.(section.solids, :xmax))
-        ymin = minimum(getproperty.(section.solids, :ymin))
-        ymax = maximum(getproperty.(section.solids, :ymax))
+        xmin = minimum(getproperty.(sections, :xmin))
+        xmax = maximum(getproperty.(sections, :xmax))
+        ymin = minimum(getproperty.(sections, :ymin))
+        ymax = maximum(getproperty.(sections, :ymax))
 
         Sx = Ix / maximum(abs.([ymin, ymax] .- Cy))
         Sy = Iy / maximum(abs.([xmin, xmax] .- Cx))

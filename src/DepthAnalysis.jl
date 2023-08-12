@@ -37,7 +37,7 @@ end
 
 Implements the Sutherland-Hodge polygon clipping algorithm between a given section and a horizontal line at depth `depth` from the top of the section. "top" is the extreme y-position of the section. Returns a vector of vectors containing the vertices of the new clipped polygon.
 """
-function sutherland_hodge(section::PolygonalSection, depth::Float64)
+function sutherland_hodge(section::PolygonalSection, depth::Float64; return_section = false)
 
     #section points
     points = section.points
@@ -76,7 +76,7 @@ function sutherland_hodge(section::PolygonalSection, depth::Float64)
         end
     end
 
-    return new_polygon
+    return_section ? typeof(section)(new_polygon) :  new_polygon
 
 end
 
@@ -85,7 +85,7 @@ end
 
 Implements the Sutherland-Hodge polygon clipping algorithm between a given section and a horizontal line at position `y`. if `y` is above the section, nothing is returned. If `y` is below the section, the points of the original section are returned
 """
-function sutherland_hodge_abs(section::PolygonalSection, y::Float64)
+function sutherland_hodge_abs(section::PolygonalSection, y::Float64; return_section = false)
 
     #section points
     points = section.points
@@ -93,7 +93,7 @@ function sutherland_hodge_abs(section::PolygonalSection, y::Float64)
 
     # if absolute position is above section, no clip occurs
     if y > section.ymax
-        [[0., 0.]]
+        [[0., 0.], [0., 0.]]
     end
 
     #if absoluteposition encompasses the whole section, return section
@@ -102,7 +102,7 @@ function sutherland_hodge_abs(section::PolygonalSection, y::Float64)
     end
 
     #clipping edge
-    y_clip = section.ymax - y
+    y_clip = y
 
     e0 = [section.xmin - 1, y_clip]
     e1 = [section.xmax + 1, y_clip]
@@ -131,7 +131,7 @@ function sutherland_hodge_abs(section::PolygonalSection, y::Float64)
         end
     end
 
-    return new_polygon
+    return_section ? typeof(section)(new_polygon) :  new_polygon
 
 end
 
@@ -260,7 +260,7 @@ Returns the depth map of a compound section
 function depth_map(section::CompoundSection, n::Integer = 250)
 
     #sampling range
-    depth_range = collect(range(0, section.ymax - section.ymin, n))
+    depth_range = collect(range(section.ymax, section.ymin, n))
 
     #individual depth maps
     depth_maps = [depth_map_abs(sec, depth_range) for sec in section.solids]
@@ -280,6 +280,17 @@ function area_from_depth(section::PolygonalSection, depth::Float64)
 end
 
 """
+    area_from_depth(section::CompoundSection, depth::Float64)
+
+Returns the area enclosed by a distance `depth` from the top of a compound section
+"""
+function area_from_depth(section::CompoundSection, depth::Float64)
+    y = section.ymax - depth
+
+    sum(poly_area.(sutherland_hodge_abs.(section.solids, y)))
+end
+
+"""
     area_from_depth_abs(section::PolygonalSection, y::Float64)
 
 Returns the area enclosed by the intersection of the section and a horizontal line at position `y`. Will return 0 if y is above the section.
@@ -289,9 +300,18 @@ function area_from_depth_abs(section::PolygonalSection, y::Float64)
 end
 
 """
+    area_from_depth_abs(section::CompoundSection, y::Float64)
+
+Returns the area enclosed by the intersection of the section and a horizontal line at position `y`. Will return 0 if y is above the section.
+"""
+function area_from_depth(section::CompoundSection, y::Float64)
+    sum(poly_area.(sutherland_hodge_abs.(section.solids, y)))
+end
+
+"""
     depth_from_area(section::PolygonalSection, area::Float64; max_iter = 500, show_stats = false)
 
-Returns the required depth from the top of the section to achieve a target area; 
+Returns the required depth from the top of the section to achieve a target area.
 
 - `max_iter = 500` sets the maximum number of iterations performed
 - `tol = 1e-2` sets the relative stopping tolerance
@@ -312,10 +332,10 @@ function depth_from_area(section::PolygonalSection, area::Float64; max_iter = 50
     depth = height / 2
     upperbound = height
     lowerbound = 0.
-    tol = 1e3
+    err = 1e3
     iter = 1
 
-    while iter ≤ max_iter && tol > rel_tol
+    while iter ≤ max_iter
         y_clip = section.ymax - depth
 
         e0 = [section.xmin - 1, y_clip]
@@ -347,10 +367,68 @@ function depth_from_area(section::PolygonalSection, area::Float64; max_iter = 50
         #enclosed area
         solved_area = poly_area(new_polygon)
 
+        #relative error
+        err = abs(solved_area - area) / area
+        err < rel_tol ? break : nothing
+
         #difference
         diff = solved_area - area
 
+        if diff < 0
+            lowerbound = depth
+            depth = (upperbound + depth) / 2
+        else
+            upperbound = depth
+            depth = (lowerbound + depth) / 2
+        end
         
+        iter += 1
+
+    end
+
+    if show_stats
+        println("Iterations: $iter")
+        println("Relative Error: $err")
+    end
+
+    return depth
+
+end
+
+"""
+    depth_from_area(section::PolygonalSection, area::Float64; max_iter = 500, show_stats = false)
+
+Returns the required depth from the top of the section to achieve a target area.
+
+- `max_iter = 500` sets the maximum number of iterations performed
+- `tol = 1e-2` sets the relative stopping tolerance
+- `show_stats = true` outputs the error of the solution
+"""
+function depth_from_area(section::CompoundSection, area::Float64; max_iter = 500, rel_tol = 1e-3, show_stats = true)
+
+    #first assert target area is possible
+    @assert area > 0 && area < section.area "Area must be non-zero and less than the total area of the section"
+
+    height = section.ymax - section.ymin
+
+    #starting guess at halfway
+    depth = height / 2
+    upperbound = height
+    lowerbound = 0.
+    err = 1e3
+    iter = 1
+
+    while iter ≤ max_iter
+
+        solved_area = area_from_depth(section, depth)
+
+        #relative error
+        err = abs(solved_area - area) / area
+
+        err < rel_tol ? break : nothing
+
+        #difference
+        diff = solved_area - area
 
         if diff < 0
             lowerbound = depth
@@ -360,8 +438,7 @@ function depth_from_area(section::PolygonalSection, area::Float64; max_iter = 50
             depth = (lowerbound + depth) / 2
         end
 
-        #relative error
-        tol = abs(solved_area - area) / area
+        
         
         iter += 1
 
@@ -369,7 +446,7 @@ function depth_from_area(section::PolygonalSection, area::Float64; max_iter = 50
 
     if show_stats
         println("Iterations: $iter")
-        println("Relative Error: $tol")
+        println("Relative Error: $err")
     end
 
     return depth
