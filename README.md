@@ -151,3 +151,12 @@ compound = CompoundSection([section, circle1, circle2])
 All utility functions listed above also work for compound sections.
 
 ![](READMEassets/compound.png)
+
+## `OffsetSection`
+Make a section whose properties are with respect to a center of rotation that is *not* the centroid of the section.
+
+```julia
+center_of_rotation = [200., 500.]
+
+offset_section = OffsetSection(section, center_of_rotation)
+```
