@@ -8,6 +8,8 @@ export SolidSection, VoidSection, CompoundSection, OffsetSection
 include("GeneralFunctions.jl")
 export poly_area
 export center_at_centroid!
+export rotate!
+export move!
 
 include("DepthAnalysis.jl")
 export sutherland_hodgman
