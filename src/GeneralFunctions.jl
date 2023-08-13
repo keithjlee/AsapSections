@@ -152,11 +152,11 @@ end
 rotate_2d_about_origin(point::AbstractVector{<:Real}, angle::Float64) = [cos(angle) -sin(angle); sin(angle) cos(angle)] * point
 
 """
-    rotate!(section::PolygonalSection, angle::Float64)
+    rotate_section!(section::PolygonalSection, angle::Float64)
 
 Rotate a section about its centroid in an anti-clockwise direction by `angle` (radians)
 """
-function rotate!(section::PolygonalSection, angle::Float64)
+function rotate_section!(section::PolygonalSection, angle::Float64)
 
     #rotate about centroid
     rotated_points = hcat([rotate_2d_about_origin(col .- section.centroid, angle) for col in eachcol(section.points)]...) .+ section.centroid
@@ -170,11 +170,11 @@ function rotate!(section::PolygonalSection, angle::Float64)
 end
 
 """
-    translate!(section::PolygonalSection, vector::Vector{Float64})
+    translate_section!(section::PolygonalSection, vector::Vector{Float64})
 
 Translate a section by a vector `vector`
 """
-function translate!(section::PolygonalSection, vector::Vector{Float64})
+function translate_section!(section::PolygonalSection, vector::Vector{Float64})
 
     @assert length(vector) == 2
 

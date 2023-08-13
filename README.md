@@ -65,11 +65,28 @@ section = SolidSection(section_vertices)
 
 ![](READMEassets/step2.png)
 
+### Transformations
 To reposition the vertices such that the centroid is at the origin, use:
 
 ```julia
 center_at_centroid!(section::PolygonalSection)
 ```
+
+To rotate a section about its centroid:
+
+```julia
+rotate_section!(section::PolygonalSection, angle::Float64)
+```
+
+Where `angle` is the anti-clockwise rotation angle in radians.
+
+To rigidly translate a section:
+
+```julia
+translate_section!(section::PolygonalSection, vector::Vector{Float64})
+```
+
+Where `vector` is the 2D translational vector.
 
 ## Analysis
 ### `depth_map`

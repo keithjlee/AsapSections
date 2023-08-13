@@ -8,7 +8,8 @@ export SolidSection, VoidSection, CompoundSection, OffsetSection
 include("GeneralFunctions.jl")
 export poly_area
 export center_at_centroid!
-export rotate!
+export rotate_section!
+export translate_section!
 export move!
 
 include("DepthAnalysis.jl")
