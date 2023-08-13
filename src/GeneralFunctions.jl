@@ -137,3 +137,14 @@ function section_properties!(solid::PolygonalSection)
     solid.ymin = ymin
     solid.ymax = ymax
 end
+
+function center_at_centroid!(section::PolygonalSection)
+    section.points .-= section.centroid
+    section.points_circular .-= section.centroid
+    section.xmin -= section.centroid[1]
+    section.xmax -= section.centroid[1]
+    section.ymin -= section.centroid[2]
+    section.ymax -= section.centroid[2]
+
+    section.centroid = [0., 0.]
+end

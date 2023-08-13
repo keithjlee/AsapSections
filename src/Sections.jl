@@ -1,4 +1,5 @@
-abstract type PolygonalSection end
+abstract type AbstractPolygonalSection end
+abstract type PolygonalSection <: AbstractPolygonalSection end
 
 mutable struct SolidSection <: PolygonalSection
     points::Matrix{Float64}
@@ -17,7 +18,7 @@ mutable struct SolidSection <: PolygonalSection
     E::Union{Float64, Nothing}
 
     """
-        Solid(points::Matrix{Float64})
+        SolidSection(points::Matrix{Float64})
 
     Create a solid section from a [2 × n] matrix of ordered 2D points
     """
@@ -48,7 +49,7 @@ mutable struct SolidSection <: PolygonalSection
     end
 
     """
-        Solid(points::Vector{Vector{Float64}})
+        SolidSection(points::Vector{Vector{Float64}})
 
     Create a solid section from a vector of ordered 2D point vectors
     """
@@ -135,7 +136,7 @@ mutable struct VoidSection <: PolygonalSection
     end
 end
 
-struct CompoundSection
+struct CompoundSection <: AbstractPolygonalSection
     solids::Vector{SolidSection}
     voids::Vector{VoidSection}
     centroid::Vector{Float64}
@@ -195,4 +196,37 @@ struct CompoundSection
 
         return new(solids, voids, centroid, A, Ix, Sx, Iy, Sy, xmin, xmax, ymin, ymax)
     end
+end
+
+struct OffsetSection
+    section::AbstractPolygonalSection
+    center_of_rotation::Vector{Float64}
+    Ix::Float64
+    Sx::Float64
+    Iy::Float64
+    Sy::Float64
+
+    """
+        OffsetSection(section::AbstractPolygonalSection, center_of_rotation::Vector{<:Real})
+
+    Generate a section with a center of rotation that is not coincident with the centroid of the section
+    """
+    function OffsetSection(section::AbstractPolygonalSection, center_of_rotation::Vector{<:Real})
+
+        @assert length(center_of_rotation) == 2 "center_of_rotation must be a 2D vector"
+
+        dx, dy = section.centroid - center_of_rotation
+
+        Ix = section.Ix + section.area * dy^2
+        Iy = section.Iy + section.area * dx^2
+
+        x_max_critical = maximum(abs.([section.xmin, section.xmax] .- center_of_rotation[1]))
+        y_max_critical = maximum(abs.([section.ymin, section.ymax] .- center_of_rotation[2]))
+
+        Sx = Ix / y_max_critical
+        Sy = Iy / x_max_critical
+
+        return new(section, center_of_rotation, Ix, Sx, Iy, Sy)
+    end
+
 end

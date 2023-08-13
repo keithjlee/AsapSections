@@ -33,11 +33,11 @@ function intersection(p1::T, p2::T, p3::T, p4::T) where {T <: AbstractVector{Flo
 end
 
 """
-    sutherland_hodge(section::PolygonalSection, depth::Float64)
+    sutherland_hodgman(section::PolygonalSection, depth::Float64)
 
-Implements the Sutherland-Hodge polygon clipping algorithm between a given section and a horizontal line at depth `depth` from the top of the section. "top" is the extreme y-position of the section. Returns a vector of vectors containing the vertices of the new clipped polygon.
+Implements the Sutherland-Hodgman polygon clipping algorithm between a given section and a horizontal line at depth `depth` from the top of the section. "top" is the extreme y-position of the section. Returns a vector of vectors containing the vertices of the new clipped polygon.
 """
-function sutherland_hodge(section::PolygonalSection, depth::Float64; return_section = false)
+function sutherland_hodgman(section::PolygonalSection, depth::Float64; return_section = false)
 
     #section points
     points = section.points
@@ -81,11 +81,11 @@ function sutherland_hodge(section::PolygonalSection, depth::Float64; return_sect
 end
 
 """
-    sutherland_hodge_abs(section::PolygonalSection, y::Float64)
+    sutherland_hodgman_abs(section::PolygonalSection, y::Float64)
 
-Implements the Sutherland-Hodge polygon clipping algorithm between a given section and a horizontal line at position `y`. if `y` is above the section, nothing is returned. If `y` is below the section, the points of the original section are returned
+Implements the Sutherland-Hodgman polygon clipping algorithm between a given section and a horizontal line at position `y`. if `y` is above the section, nothing is returned. If `y` is below the section, the points of the original section are returned
 """
-function sutherland_hodge_abs(section::PolygonalSection, y::Float64; return_section = false)
+function sutherland_hodgman_abs(section::PolygonalSection, y::Float64; return_section = false)
 
     #section points
     points = section.points
@@ -185,7 +185,7 @@ function depth_map(section::PolygonalSection, n::Integer = 250)
 
     end
 
-    return collect(depth_range), Astore
+    return collect(range(section.ymax, section.ymin, n)), Astore
 
 end
 
@@ -274,7 +274,7 @@ end
 Returns the area enclosed by a distance `depth` from the top of a given section
 """
 function area_from_depth(section::PolygonalSection, depth::Float64)
-    poly_area(sutherland_hodge(section, depth))
+    poly_area(sutherland_hodgman(section, depth))
 end
 
 """
@@ -285,7 +285,7 @@ Returns the area enclosed by a distance `depth` from the top of a compound secti
 function area_from_depth(section::CompoundSection, depth::Float64)
     y = section.ymax - depth
 
-    sum(poly_area.(sutherland_hodge_abs.(section.solids, y)))
+    sum(poly_area.(sutherland_hodgman_abs.(section.solids, y)))
 end
 
 """
@@ -294,7 +294,7 @@ end
 Returns the area enclosed by the intersection of the section and a horizontal line at position `y`. Will return 0 if y is above the section.
 """
 function area_from_depth_abs(section::PolygonalSection, y::Float64)
-    poly_area(sutherland_hodge_abs(section, y))
+    poly_area(sutherland_hodgman_abs(section, y))
 end
 
 """
@@ -303,7 +303,7 @@ end
 Returns the area enclosed by the intersection of the section and a horizontal line at position `y`. Will return 0 if y is above the section.
 """
 function area_from_depth(section::CompoundSection, y::Float64)
-    sum(poly_area.(sutherland_hodge_abs.(section.solids, y)))
+    sum(poly_area.(sutherland_hodgman_abs.(section.solids, y)))
 end
 
 """
