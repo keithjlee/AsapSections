@@ -297,14 +297,6 @@ function area_from_depth_abs(section::PolygonalSection, y::Float64)
     poly_area(sutherland_hodgman_abs(section, y))
 end
 
-"""
-    area_from_depth_abs(section::CompoundSection, y::Float64)
-
-Returns the area enclosed by the intersection of the section and a horizontal line at position `y`. Will return 0 if y is above the section.
-"""
-function area_from_depth(section::CompoundSection, y::Float64)
-    sum(poly_area.(sutherland_hodgman_abs.(section.solids, y)))
-end
 
 """
     depth_from_area(section::PolygonalSection, area::Float64; max_iter = 500, show_stats = false)
