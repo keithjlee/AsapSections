@@ -5,6 +5,9 @@ using LinearAlgebra
 include("Sections.jl")
 export SolidSection, VoidSection, CompoundSection, OffsetSection
 
+include("SectionProperties.jl")
+export SectionProperties
+
 include("GeneralFunctions.jl")
 export poly_area
 export center_at_centroid!
