@@ -165,7 +165,7 @@ circle2 = SolidSection(circle_pts_2)
 compound = CompoundSection([section, circle1, circle2])
 ```
 
-All utility functions listed above also work for compound sections.
+All utility functions listed above also work for compound sections, with the exception of `sutherland_hodman`.
 
 ![](READMEassets/compound.png)
 
