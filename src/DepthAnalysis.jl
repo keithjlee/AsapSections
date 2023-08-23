@@ -412,8 +412,7 @@ function depth_from_area(section::CompoundSection, area::Float64; max_iter = 500
     iter = 1
 
     while iter ≤ max_iter
-
-        y_clip = section.ymax - depth
+        
         solved_area = area_from_depth(section, depth)
 
         #difference
