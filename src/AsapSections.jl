@@ -17,6 +17,7 @@ export move!
 
 include("DepthAnalysis.jl")
 export sutherland_hodgman
+export sutherland_hodgman_abs
 export intersection
 export depth_map
 export area_from_depth
