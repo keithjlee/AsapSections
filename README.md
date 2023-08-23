@@ -108,7 +108,7 @@ A = depth_map(section::AbstractPolygonalSection, y::Vector{Float64})
 ```
 
 ### `sutherland_hodgman`
-Performs the [Sutherland-Hodgman Algorithm](https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm) to get the vertices or a `Section` of the clipped geometry caused by a horizontal line at depth `y` from the top of the section:
+Performs the [Sutherland-Hodgman Algorithm](https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm) to get the vertices or a `SolidSection` of the clipped geometry caused by a horizontal line at depth `y` from the top of the section:
 
 ```julia
 clipped_vertices = sutherland_hodgman(section::PolygonalSection, y::Float64)
