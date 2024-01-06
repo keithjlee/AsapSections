@@ -1,3 +1,6 @@
+# ARCHIVED
+AsapSections has been incorporated into [AsapToolkit.jl](https://github.com/keithjlee/AsapToolkit)
+
 # AsapSections
 Analysis of arbitrary polygonal cross sections.
 
